@@ -1,0 +1,62 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  runtime      = "nodejs"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Menu {
+  id String @id @default(uuid())
+  item_name String 
+  half_plate_price Int
+  full_plate_price Int
+  image String[]
+  description String?
+  restaurant_id String
+  restaurant Restaurant @relation(fields: [restaurant_id] , references: [id])
+}
+model Reviews {
+  id String @id @default(uuid())
+  restaurant_id String
+  review String
+  review_by Int // User id
+  date DateTime
+  image String
+  rating Int
+  restaurant Restaurant @relation(fields : [restaurant_id], references: [id])
+}
+model Owner {
+  id String @id @default(uuid())
+  name String
+  email String @unique
+  phone_number Int
+  restaurant_id String @unique
+  restaurant Restaurant @relation(fields: [restaurant_id], references: [id])
+}
+model Restaurant {
+  id String @id @default(uuid()) 
+  name String @unique
+  email String @unique
+  website String @unique
+  address_line_1 String 
+  address_line_2 String
+  address_line_3 String?
+  pincode String
+  state String
+  city String
+  country String
+  phone_number Int[]
+  rating Int
+  review Reviews[]
+  menu Menu[]
+  owner Owner?
+}
