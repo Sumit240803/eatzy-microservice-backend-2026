@@ -1,8 +1,15 @@
+import fp from "fastify-plugin";
 import jwt from "@fastify/jwt";
-import type { FastifyInstance } from "fastify";
 
-export default async function jwtPlugin(app : FastifyInstance) {
-    app.register(jwt , {
-        secret : process.env.JWT_SECRET!
+/**
+ * Registers @fastify/jwt so the gateway can verify tokens issued by the auth
+ * service. The secret MUST match the auth service's JWT_SECRET.
+ *
+ * Wrapped with fastify-plugin so `request.jwtVerify` is available to the proxy
+ * pre-handlers registered in sibling scopes.
+ */
+export default fp(async (app) => {
+    await app.register(jwt, {
+        secret: process.env.JWT_SECRET ?? "super-secret-change-me-in-production"
     });
-}
+});

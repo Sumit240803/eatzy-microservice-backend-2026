@@ -1,36 +1,35 @@
 {
-  "name": "restaurants",
+  "name": "auth",
   "version": "1.0.0",
-  "description": "This project was bootstrapped with Fastify-CLI.",
+  "description": "User & authentication service for the food delivery system.",
   "main": "app.ts",
   "directories": {
     "test": "test"
   },
   "scripts": {
     "test": "npm run build:ts && tsc -p test/tsconfig.json && c8 node --test -r ts-node/register \"test/**/*.ts\"",
-    "start": "npm run build:ts && fastify start -l info -p 3002 dist/app.js",
+    "start": "npm run build:ts && fastify start -l info -p 3001 dist/app.js",
     "build:ts": "tsc",
     "watch:ts": "tsc -w",
     "dev": "npm run build:ts && concurrently -k -p \"[{name}]\" -n \"TypeScript,App\" -c \"yellow.bold,cyan.bold\" \"npm:watch:ts\" \"npm:dev:start\"",
-    "dev:start": "fastify start --ignore-watch=.ts$ -w -l info -P -p 3002 dist/app.js"
+    "dev:start": "fastify start --ignore-watch=.ts$ -w -l info -P -p 3001 dist/app.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@fastify/autoload": "^6.0.0",
-    "@fastify/postgres": "^6.0.2",
+    "@fastify/jwt": "^10.0.0",
     "@fastify/sensible": "^6.0.0",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
-    "@types/dotenv": "^6.1.1",
+    "bcryptjs": "^3.0.2",
     "dotenv": "^17.4.2",
     "fastify": "^5.0.0",
     "fastify-cli": "^8.0.0",
     "fastify-plugin": "^5.0.0",
     "pg": "^8.21.0",
-    "prisma": "^7.8.0",
-    "sequelize-fastify": "^2.0.0"
+    "prisma": "^7.8.0"
   },
   "devDependencies": {
     "@types/node": "^25.0.3",
