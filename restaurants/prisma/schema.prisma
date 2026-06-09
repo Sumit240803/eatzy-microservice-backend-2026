@@ -22,7 +22,7 @@ model Menu {
   image String[]
   description String?
   restaurant_id String
-  restaurant Restaurant @relation(fields: [restaurant_id] , references: [id])
+  restaurant Restaurant @relation(fields: [restaurant_id] , references: [id], onDelete: Cascade)
 }
 model Reviews {
   id String @id @default(uuid())
@@ -32,7 +32,7 @@ model Reviews {
   date DateTime
   image String
   rating Int
-  restaurant Restaurant @relation(fields : [restaurant_id], references: [id])
+  restaurant Restaurant @relation(fields : [restaurant_id], references: [id], onDelete: Cascade)
 }
 model Owner {
   id String @id @default(uuid())
@@ -40,7 +40,7 @@ model Owner {
   email String @unique
   phone_number Int
   restaurant_id String @unique
-  restaurant Restaurant @relation(fields: [restaurant_id], references: [id])
+  restaurant Restaurant @relation(fields: [restaurant_id], references: [id], onDelete: Cascade)
 }
 model Restaurant {
   id String @id @default(uuid()) 
