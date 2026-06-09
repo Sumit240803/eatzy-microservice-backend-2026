@@ -1,0 +1,39 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  runtime      = "nodejs"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+model Payment {
+  id                  String        @id @default(uuid())
+  order_id            String
+  customer_id         String // user id forwarded from the gateway (x-user-id)
+  amount              Int // charge amount in the smallest currency unit
+  currency            String        @default("inr")
+  status              PaymentStatus @default(PENDING)
+  provider            String        @default("stripe")
+  provider_payment_id String? // Stripe PaymentIntent id
+  refunded_amount     Int           @default(0)
+  created_at          DateTime      @default(now())
+  updated_at          DateTime      @updatedAt
+
+  @@index([order_id])
+  @@index([customer_id])
+  @@index([provider_payment_id])
+}
