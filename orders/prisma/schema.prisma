@@ -1,0 +1,54 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  runtime      = "nodejs"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum OrderStatus {
+  PLACED
+  ACCEPTED
+  PREPARING
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+enum PlateType {
+  HALF
+  FULL
+}
+
+model Order {
+  id               String      @id @default(uuid())
+  customer_id      String // user id forwarded from the gateway (x-user-id)
+  restaurant_id    String
+  status           OrderStatus @default(PLACED)
+  total_amount     Int
+  delivery_address String
+  items            OrderItem[]
+  created_at       DateTime    @default(now())
+  updated_at       DateTime    @updatedAt
+
+  @@index([customer_id])
+  @@index([restaurant_id])
+}
+
+model OrderItem {
+  id           String    @id @default(uuid())
+  order_id     String
+  order        Order     @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  menu_item_id String
+  item_name    String // snapshot of the item name at order time
+  plate_type   PlateType
+  unit_price   Int // snapshot of the price at order time
+  quantity     Int
+  subtotal     Int
+}

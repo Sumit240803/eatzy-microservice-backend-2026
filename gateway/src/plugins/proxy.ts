@@ -20,6 +20,7 @@ interface ServiceRoute {
 
 const AUTH_URL = process.env.AUTH_URL ?? "http://localhost:3001";
 const RESTAURANTS_URL = process.env.RESTAURANTS_URL ?? "http://localhost:3002";
+const ORDERS_URL = process.env.ORDERS_URL ?? "http://localhost:3003";
 
 /**
  * Routing table. More specific prefixes are listed first. Reads are public;
@@ -48,6 +49,12 @@ const services: ServiceRoute[] = [
         upstream: RESTAURANTS_URL,
         // GET (catalog/menu/reviews reads) is public; writes require auth.
         isPublic: (r) => r.method === "GET"
+    },
+    {
+        prefix: "/orders",
+        upstream: ORDERS_URL,
+        // All order operations require an authenticated user.
+        isPublic: () => false
     }
 ];
 
