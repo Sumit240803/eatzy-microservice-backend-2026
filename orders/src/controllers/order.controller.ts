@@ -3,6 +3,7 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import { get_user_id, get_user_role } from "../utils/authorization";
 import { fetch_menu, verify_restaurant_owner, UpstreamError } from "../utils/restaurants";
+import { publish_event } from "../utils/events";
 
 type OrderStatus = "PLACED" | "ACCEPTED" | "PREPARING" | "OUT_FOR_DELIVERY" | "DELIVERED" | "CANCELLED";
 type PlateType = "HALF" | "FULL";
@@ -99,6 +100,8 @@ export async function place_order(request : FastifyRequest<{Body : PlaceOrderBod
         },
         include : { items : true }
     });
+
+    await publish_event("ORDER_PLACED", customer_id, { order_id : order.id, total : order.total_amount });
 
     return reply.code(201).send({ data : order });
 }
@@ -252,5 +255,8 @@ export async function update_order_status(request : FastifyRequest<{Params : {id
         data : { status : target },
         include : { items : true }
     });
+
+    await publish_event("ORDER_STATUS_CHANGED", order.customer_id, { order_id : order.id, status : target });
+
     return { data : updated };
 }

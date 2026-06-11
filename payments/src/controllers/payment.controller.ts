@@ -10,6 +10,7 @@ import {
     provider_mode
 } from "../utils/payment-provider";
 import config from "../config/env";
+import { publish_event } from "../utils/events";
 
 interface CreatePaymentBody {
     order_id : string;
@@ -201,6 +202,9 @@ export async function refund_payment(request : FastifyRequest<{Params : {id : st
             status : refunded_total >= payment.amount ? "REFUNDED" : "SUCCEEDED"
         }
     });
+
+    await publish_event("PAYMENT_REFUNDED", payment.customer_id, { order_id : payment.order_id, amount });
+
     return { data : updated };
 }
 
@@ -240,6 +244,7 @@ export async function handle_webhook(request : FastifyRequest, reply : FastifyRe
     switch(event.type){
         case "payment_intent.succeeded":
             await request.server.prisma.payment.update({ where : { id : payment.id }, data : { status : "SUCCEEDED" } });
+            await publish_event("PAYMENT_SUCCEEDED", payment.customer_id, { order_id : payment.order_id, amount : payment.amount });
             break;
         case "payment_intent.payment_failed":
             await request.server.prisma.payment.update({ where : { id : payment.id }, data : { status : "FAILED" } });

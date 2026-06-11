@@ -14,6 +14,9 @@ const config = {
     },
     services : {
         restaurants_url : process.env.RESTAURANTS_URL ?? "http://localhost:3002"
+    },
+    redis : {
+        url : process.env.REDIS_URL ?? "redis://localhost:6379"
     }
 }
 

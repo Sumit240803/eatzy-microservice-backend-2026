@@ -3,6 +3,7 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import { get_user_id, get_user_role } from "../utils/authorization";
 import { fetch_order, update_order_status, UpstreamError } from "../utils/orders";
+import { publish_event } from "../utils/events";
 
 type DeliveryStatus = "PENDING" | "ASSIGNED" | "PICKED_UP" | "DELIVERED" | "CANCELLED";
 
@@ -131,6 +132,9 @@ export async function assign_delivery(request : FastifyRequest<{Params : {id : s
         where : { id : delivery.id },
         data : { driver_id, status : "ASSIGNED", assigned_at : new Date() }
     });
+
+    await publish_event("DELIVERY_ASSIGNED", delivery.customer_id, { order_id : delivery.order_id, driver_id });
+
     return { data : updated };
 }
 

@@ -15,6 +15,9 @@ const config = {
     services : {
         orders_url : process.env.ORDERS_URL ?? "http://localhost:3003"
     },
+    redis : {
+        url : process.env.REDIS_URL ?? "redis://localhost:6379"
+    },
     stripe : {
         secret_key : process.env.STRIPE_SECRET_KEY ?? "",
         webhook_secret : process.env.STRIPE_WEBHOOK_SECRET ?? ""
