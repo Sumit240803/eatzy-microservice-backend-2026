@@ -4,3 +4,4 @@ restaurants - 3002
 orders - 3003
 payments - 3004
 delivery - 3005
+notifications - 3006

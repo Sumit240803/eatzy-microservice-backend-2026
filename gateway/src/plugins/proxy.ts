@@ -23,6 +23,7 @@ const RESTAURANTS_URL = process.env.RESTAURANTS_URL ?? "http://localhost:3002";
 const ORDERS_URL = process.env.ORDERS_URL ?? "http://localhost:3003";
 const PAYMENTS_URL = process.env.PAYMENTS_URL ?? "http://localhost:3004";
 const DELIVERY_URL = process.env.DELIVERY_URL ?? "http://localhost:3005";
+const NOTIFICATIONS_URL = process.env.NOTIFICATIONS_URL ?? "http://localhost:3006";
 
 /**
  * Routing table. More specific prefixes are listed first. Reads are public;
@@ -69,6 +70,12 @@ const services: ServiceRoute[] = [
         prefix: "/deliveries",
         upstream: DELIVERY_URL,
         // All delivery operations require an authenticated user.
+        isPublic: () => false
+    },
+    {
+        prefix: "/notifications",
+        upstream: NOTIFICATIONS_URL,
+        // Reading one's own notifications requires an authenticated user.
         isPublic: () => false
     }
 ];

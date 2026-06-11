@@ -1,0 +1,37 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  runtime      = "nodejs"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model Notification {
+  id        String             @id @default(uuid())
+  user_id   String
+  type      String
+  channel   String             @default("email")
+  recipient String // resolved email address
+  subject   String
+  body      String
+  status    NotificationStatus @default(PENDING)
+  error     String?
+  data      Json?
+  created_at DateTime          @default(now())
+  sent_at   DateTime?
+
+  @@index([user_id])
+  @@index([type])
+}
