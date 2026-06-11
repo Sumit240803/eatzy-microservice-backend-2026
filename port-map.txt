@@ -3,3 +3,4 @@ auth - 3001
 restaurants - 3002
 orders - 3003
 payments - 3004
+delivery - 3005

@@ -22,6 +22,7 @@ const AUTH_URL = process.env.AUTH_URL ?? "http://localhost:3001";
 const RESTAURANTS_URL = process.env.RESTAURANTS_URL ?? "http://localhost:3002";
 const ORDERS_URL = process.env.ORDERS_URL ?? "http://localhost:3003";
 const PAYMENTS_URL = process.env.PAYMENTS_URL ?? "http://localhost:3004";
+const DELIVERY_URL = process.env.DELIVERY_URL ?? "http://localhost:3005";
 
 /**
  * Routing table. More specific prefixes are listed first. Reads are public;
@@ -63,6 +64,12 @@ const services: ServiceRoute[] = [
         // The Stripe webhook is called by Stripe (no JWT); it is verified by
         // signature instead. Everything else requires an authenticated user.
         isPublic: (r) => r.method === "POST" && r.url.startsWith("/payments/webhook")
+    },
+    {
+        prefix: "/deliveries",
+        upstream: DELIVERY_URL,
+        // All delivery operations require an authenticated user.
+        isPublic: () => false
     }
 ];
 
