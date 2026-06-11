@@ -19,9 +19,10 @@ await server.register(proxyPlugin);
 server.get("/ping", async () => "pong\n");
 
 const port = Number(process.env.PORT ?? 3000);
+const host = process.env.HOST ?? "0.0.0.0";
 
 try {
-    const address = await server.listen({ port });
+    const address = await server.listen({ port, host });
     server.log.info(`Gateway listening at ${address}`);
 } catch (err) {
     server.log.error(err);

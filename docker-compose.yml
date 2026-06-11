@@ -1,0 +1,178 @@
+name: eatzy
+
+# Common config shared by the backend services: restart policy and waiting for
+# the datastores to be healthy before starting.
+x-backend: &backend
+  restart: unless-stopped
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-1234}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro
+    # Published on 5433 to avoid clashing with a local Postgres on 5432.
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  redis:
+    image: redis:7
+    # Published on 6380 to avoid clashing with a local Redis on 6379.
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+
+  auth:
+    <<: *backend
+    build: ./auth
+    environment:
+      PORT: 3001
+      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:-1234}@postgres:5432/auth
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
+    ports:
+      - "3001:3001"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/').then(()=>process.exit(0)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  restaurants:
+    <<: *backend
+    build: ./restaurants
+    environment:
+      PORT: 3002
+      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:-1234}@postgres:5432/restaurants
+    ports:
+      - "3002:3002"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3002/').then(()=>process.exit(0)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  orders:
+    <<: *backend
+    build: ./orders
+    environment:
+      PORT: 3003
+      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:-1234}@postgres:5432/orders
+      RESTAURANTS_URL: http://restaurants:3002
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "3003:3003"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3003/').then(()=>process.exit(0)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  payments:
+    <<: *backend
+    build: ./payments
+    environment:
+      PORT: 3004
+      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:-1234}@postgres:5432/payments
+      ORDERS_URL: http://orders:3003
+      REDIS_URL: redis://redis:6379
+      PAYMENT_CURRENCY: ${PAYMENT_CURRENCY:-inr}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+    ports:
+      - "3004:3004"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3004/').then(()=>process.exit(0)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  delivery:
+    <<: *backend
+    build: ./delivery
+    environment:
+      PORT: 3005
+      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:-1234}@postgres:5432/delivery
+      ORDERS_URL: http://orders:3003
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "3005:3005"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3005/').then(()=>process.exit(0)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  notifications:
+    <<: *backend
+    build: ./notifications
+    environment:
+      PORT: 3006
+      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:-1234}@postgres:5432/notifications
+      REDIS_URL: redis://redis:6379
+      AUTH_URL: http://auth:3001
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-Eatzy <no-reply@eatzy.local>}
+    ports:
+      - "3006:3006"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3006/').then(()=>process.exit(0)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  gateway:
+    build: ./gateway
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      HOST: 0.0.0.0
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
+      AUTH_URL: http://auth:3001
+      RESTAURANTS_URL: http://restaurants:3002
+      ORDERS_URL: http://orders:3003
+      PAYMENTS_URL: http://payments:3004
+      DELIVERY_URL: http://delivery:3005
+      NOTIFICATIONS_URL: http://notifications:3006
+    ports:
+      - "3000:3000"
+    depends_on:
+      auth:
+        condition: service_healthy
+      restaurants:
+        condition: service_healthy
+      orders:
+        condition: service_healthy
+      payments:
+        condition: service_healthy
+      delivery:
+        condition: service_healthy
+      notifications:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/ping').then(()=>process.exit(0)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  pgdata:
